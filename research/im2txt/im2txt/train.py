@@ -59,10 +59,13 @@ def main(unused_argv):
   # Build the TensorFlow graph.
   g = tf.Graph()
   with g.as_default():
-    # Build the model.
-    model = show_and_tell_model.ShowAndTellModel(
-        model_config, mode="train", train_inception=FLAGS.train_inception)
-    model.build()
+    for d in ['/gpu:0', '/gpu:1']:
+      with tf.device(d):
+        # Build the model.
+        model = show_and_tell_model.ShowAndTellModel(
+            model_config, mode="train", train_inception=FLAGS.train_inception)
+        model.build()
+        tf.get_variable_scope().reuse_variables()
 
     # Set up the learning rate.
     learning_rate_decay_fn = None
@@ -107,6 +110,7 @@ def main(unused_argv):
       global_step=model.global_step,
       number_of_steps=FLAGS.number_of_steps,
       init_fn=model.init_fn,
+      session_config=tf.ConfigProto(log_device_placement=True, allow_soft_placement=True),
       saver=saver)
 
 
